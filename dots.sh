@@ -1,13 +1,21 @@
 #!/bin/sh
 clear
 
+function cleanup {
+  yadm restore --staged $FILES
+}
+
 UNSTAGED=$(yadm status | sed -e '1,/commit:/d' | sed -n 's/.*modified://p; s/.*deleted://p')
 echo "Pick your dotfiles to $(gum style --foreground 212 "add")."
 FILES=$(gum choose --no-limit $UNSTAGED)
 yadm add $FILES
 
-# clear; echo "Choose the type of commit."
+# if no files were selected, exit
+if [ -z "$FILES" ]; then
+  exit 0
+fi
 
+echo "Choose the type of commit."
 TYPE=$(gum choose "fix" "feat" "docs" "style" "refactor" "test" "chore" "revert")
 SCOPE=$(gum input --placeholder "scope e.g. nvim")
 
@@ -15,15 +23,14 @@ SCOPE=$(gum input --placeholder "scope e.g. nvim")
 [[ -n "$SCOPE" ]] && SCOPE="($SCOPE)"
 
 # Pre-populate the input with the type(scope): so that the user may change it
-SUMMARY=$(gum input --value "$TYPE$SCOPE: " --placeholder "Summary of this change")
+SUMMARY=$(gum input --value "$TYPE$SCOPE: " --placeholder "Summary of this change"); clear
 
-clear
+SUCCESS=$(gum style "Your dotfiles were pushed $(gum style --foreground 79 "successfully")!")
+FAILURE=$(gum style "Nothing was pushed, $(gum style --foreground 9 "sadly")...")
 
-# Commit these changes
-gum confirm "Commit changes?" && yadm commit -m "$SUMMARY"
+# cleanup before exit
+trap cleanup EXIT
 
-SUCCESS=$(gum style --height 2 --width 25 --padding '1 3' --border double --border-foreground 79 "Your dotfiles were pushed $(gum style --foreground 79 "successfully")!")
-FAILURE=$(gum style --height 2 --width 25 --padding '1 3' --border double --border-foreground 79 "Nothing was pushed, $(gum style --foreground 9 "sadly")...")
-
-gum confirm "Push it?" && yadm push && echo "$SUCCESS" || echo "$FAILURE"
+# Commit and push
+gum confirm "commit and push?" && yadm commit -m "$SUMMARY" && yadm push && echo "$SUCCESS" || echo "$FAILURE"
 
