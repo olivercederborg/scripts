@@ -8,12 +8,13 @@ function cleanup {
 UNSTAGED=$(yadm status | sed -e '1,/commit:/d' | sed -n 's/.*modified://p; s/.*deleted://p')
 echo "Pick your dotfiles to $(gum style --foreground 212 "add")."
 FILES=$(gum choose --no-limit $UNSTAGED)
-yadm add $FILES
 
 # if no files were selected, exit
 if [ -z "$FILES" ]; then
   exit 0
 fi
+
+yadm add $FILES
 
 echo "Choose the type of commit."
 TYPE=$(gum choose "fix" "feat" "docs" "style" "refactor" "test" "chore" "revert")
