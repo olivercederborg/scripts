@@ -6,8 +6,14 @@ function cleanup {
 }
 
 UNSTAGED=$(yadm status | sed -e '1,/commit:/d' | sed -n 's/.*modified://p; s/.*deleted://p')
+
+# if no files to manage, exit
+if [ -z "$UNSTAGED" ]; then
+  clear && echo "$(gum style --foreground 212 "No files to add.")" && exit 0
+fi
+
 echo "Pick your dotfiles to $(gum style --foreground 212 "add")."
-FILES=$(gum choose --no-limit $UNSTAGED) || clear && echo "$(gum style --foreground 212 "No files to add.")" && exit 0
+FILES=$(gum choose --no-limit $UNSTAGED)
 
 # if no files were selected, exit
 if [ -z "$FILES" ]; then
